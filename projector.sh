@@ -67,6 +67,9 @@ CACHE_FILE_PATH="${STATE_PATH:?}/cache"
 FORCE_RELOAD_CACHE=0
 # Don't touch the cache file to preserve last modification date.
 
+CURRENT_FILE_PATH="${STATE_PATH:?}/current"
+touch "${CURRENT_FILE_PATH}"
+
 LAST_FILE_PATH="${STATE_PATH:?}/last"
 touch "${LAST_FILE_PATH}"
 # shellcheck disable=SC2155
@@ -220,6 +223,9 @@ switch_session(){
 
 	echo "${1}" >> "${HISTORY_FILE_PATH}"
 
+	current_project="$(<"${CURRENT_FILE_PATH}")"
+	echo "${1}" > "${CURRENT_FILE_PATH}"
+
 	# Tmux doesn't like . or : in session names as they represent window index or
 	# pane index.
 	session_name="${1//[.:]/_}"
@@ -229,11 +235,12 @@ switch_session(){
 	fi
 
 	if [ "${TERM_PROGRAM}" = "tmux" ]; then
-		update_last "${1}"
+		update_last "${current_project}"
 		tmux switch-client -t="${session_name}"
 	else
 		tmux attach-session -t="${session_name}"
 	fi
+
 }
 
 while [ "${#}" -gt 0 ]; do
