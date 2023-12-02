@@ -51,7 +51,7 @@
 #/                          Uses XDG_STATE_HOME if set.
 #/                          value: '${STATE_PATH}'
 #/
-#/   PR_FZF_PREVIEW_COMMAND FZF command for preview ({} corresponds to the selected project)
+#/   PR_FZF_PREVIEW_COMMAND FZF command for preview ({2} corresponds to the selected project)
 #/                          Set to ' ' to disable.
 #/                          Value: '${FZF_PREVIEW_COMMAND}'
 
