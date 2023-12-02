@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 #VERSION 0.0.0
-#/ projector.sh - Project manager at the speed of light.
-#/
 #/ Usage: projector.sh [FLAGS] [COMMAND] [QUERY]
 #/
 #/ Select a local or remote project to switch to.
