@@ -2,6 +2,12 @@
 
 > Projects manager at the speed of light.
 
+https://github.com/nobe4/projector.sh/assets/2452791/c5606191-0539-41ee-aaad-d03e964ab943
+
+Go to `nobe4/projector.sh`, go to `nobe4/gh-edit`, go back, go to `cli/cli`, and show the folder structure.
+
+---
+
 If you work with many projects, you can understand the struggle to keep
 everything organized and tidy. If you like to have one tmux session per project,
 you know it can become a mess.
