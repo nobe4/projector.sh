@@ -212,7 +212,7 @@ update_last(){
 	current_session="$(tmux display-message -p '#S')"
 
 	[ "${current_session}" == "${LAST_PROJECT//[.:]/_}" ] && return
-	echo "${current_session}" > "${LAST_FILE_PATH}"
+	echo "${1}" > "${LAST_FILE_PATH}"
 }
 
 switch_session(){
