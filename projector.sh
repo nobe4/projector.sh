@@ -240,7 +240,6 @@ switch_session(){
 	else
 		tmux attach-session -t="${session_name}"
 	fi
-
 }
 
 while [ "${#}" -gt 0 ]; do
