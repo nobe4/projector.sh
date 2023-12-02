@@ -221,25 +221,11 @@ update_last(){
 switch_session(){
 	[ "${1}" == "" ] && return
 
-	echo "${1}" >> "${HISTORY_FILE_PATH}"
-
-	current_project="$(<"${CURRENT_FILE_PATH}")"
-	echo "${1}" > "${CURRENT_FILE_PATH}"
-
-	# Tmux doesn't like . or : in session names as they represent window index or
-	# pane index.
-	session_name="${1//[.:]/_}"
-
-	if ! tmux has-session -t="${session_name}" 2> /dev/null; then
-		tmux new-session -d -s "${session_name}" -c "${BASE_PATH}/${1}"
-	fi
-
-	if [ "${TERM_PROGRAM}" = "tmux" ]; then
-		update_last "${current_project}"
-		tmux switch-client -t="${session_name}"
-	else
-		tmux attach-session -t="${session_name}"
-	fi
+	export BASE_PATH="${BASE_PATH}"
+	export HISTORY_FILE_PATH="${HISTORY_FILE_PATH}"
+	export LAST_PROJECT="${LAST_PROJECT}"
+	export LAST_FILE_PATH="${LAST_FILE_PATH}"
+	"${HOME}/dev/nobe4/projector.sh/switchers/tmux.sh" "${1}"
 }
 
 while [ "${#}" -gt 0 ]; do
