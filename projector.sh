@@ -219,12 +219,8 @@ update_last(){
 }
 
 switch_session(){
-	[ "${1}" == "" ] && return
-
-	export BASE_PATH="${BASE_PATH}"
-	export HISTORY_FILE_PATH="${HISTORY_FILE_PATH}"
-	export LAST_PROJECT="${LAST_PROJECT}"
-	export LAST_FILE_PATH="${LAST_FILE_PATH}"
+	export PR_BASE_PATH="${BASE_PATH}"
+	export PR_STATE_PATH="${STATE_PATH}"
 	"${HOME}/dev/nobe4/projector.sh/switchers/tmux.sh" "${1}"
 }
 
