@@ -60,7 +60,7 @@ set -e
 BASE_PATH="${PR_BASE_PATH:-${HOME:?}/dev}"
 CACHE_TTL_DAYS="${PR_CACHE_TTL_DAYS:-1}"
 
-STATE_PATH="${PR_CACHE_PATH:-${XDG_STATE_HOME:-${HOME:?}/.local/state}/pr}"
+STATE_PATH="${PR_STATE_PATH:-${XDG_STATE_HOME:-${HOME:?}/.local/state}/pr}"
 mkdir -p "${STATE_PATH}"
 
 CACHE_FILE_PATH="${STATE_PATH:?}/cache"
