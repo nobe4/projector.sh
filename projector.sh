@@ -189,7 +189,7 @@ while [ "${#}" -gt 0 ]; do
 			show_help
 			exit 1
 			;;
-		*)  break ;;
+		*) break ;;
 	esac
 
 	shift 1
@@ -234,7 +234,9 @@ case "${COMMAND}" in
 		;;
 
 	*)
-		echo "Unknown command '${COMMAND}'"
-		exit 1
+		query="${COMMAND}"
+		project="$(select_project "$(get_projects)" "${query}" "Switch to ")"
+		clone_project "${project}"
+		switch_session "${project}"
 		;;
 esac
