@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #/ Usage: tmux.sh NEW_PROJECT
 #/
-#/ Expect the environment variables:
+#/ Require the environment variables:
 #/   PR_STATE_PATH
 #/   PR_BASE_PATH
 
