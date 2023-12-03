@@ -50,6 +50,9 @@
 #/                          Uses XDG_STATE_HOME if set.
 #/                          value: '${STATE_PATH}'
 #/
+#/   PR_SWITCHER            Path or name of a script to use as the project
+#/                          switcher. See switchers/tmux.sh for inspiration.
+#/
 #/   PR_FZF_PREVIEW_COMMAND FZF command for preview ({2} corresponds to the selected project)
 #/                          Set to ' ' to disable.
 #/                          Value: '${FZF_PREVIEW_COMMAND}'
@@ -211,9 +214,15 @@ clone_project(){
 }
 
 switch_session(){
-	export PR_BASE_PATH="${BASE_PATH}"
-	export PR_STATE_PATH="${STATE_PATH}"
-	"${HOME}/dev/nobe4/projector.sh/switchers/tmux.sh" "${1}"
+	if [ "${PR_SWITCHER}" == "" ]; then
+		cd "${BASE_PATH}/${1}"
+		# This obviously isn't ideal, as it creates a new persistent shell.
+		"${SHELL}"
+	else
+		export PR_BASE_PATH="${BASE_PATH}"
+		export PR_STATE_PATH="${STATE_PATH}"
+		"${PR_SWITCHER}" "${1}"
+	fi
 }
 
 while [ "${#}" -gt 0 ]; do
