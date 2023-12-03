@@ -89,26 +89,19 @@ refresh_cache(){
 
 	(
 		# shellcheck disable=SC2016
-		query='
-		  query($endCursor: String) {
-			viewer {
-			  repositoriesContributedTo(
-				first: 100
-				isLocked: false
-				includeUserRepositories: true
-				after: $endCursor
-			  ) {
-				nodes { nameWithOwner }
-				pageInfo { hasNextPage endCursor }
-			  }
-			}
-		  }
-		'
-		extract='.[].viewer.repositoriesContributedTo.nodes[].nameWithOwner'
 		gh api graphql \
 			--paginate \
-			-f query="${query}" \
-			--jq "${extract}" \
+			-f query='
+				query($endCursor: String) {
+					viewer {
+						repositoriesContributedTo(first: 100, isLocked: false, includeUserRepositories: true, after: $endCursor) {
+							nodes { nameWithOwner }
+							pageInfo { hasNextPage endCursor }
+						}
+					}
+				}
+				' \
+			--jq '.[].viewer.repositoriesContributedTo.nodes[].nameWithOwner' \
 			> "${PR_STATE_PATH}/cache"
 	) &
 }
