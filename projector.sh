@@ -114,7 +114,9 @@ get_local_projects(){
 }
 
 get_projects(){
-	echo "- ${LAST_PROJECT}"
+	if [ "${LAST_PROJECT}" != "" ]; then
+		echo "- ${LAST_PROJECT}"
+	fi
 
 	recent_projects="$(
 		sort < "${PR_STATE_PATH}/history" \
@@ -125,8 +127,9 @@ get_projects(){
 			| sed 's/ *[0-9]* //'
 	)"
 
-	# shellcheck disable=SC2001
-	echo "${recent_projects}" | sed 's/^/* /'
+	echo "${recent_projects}" \
+		| grep -v '^$' \
+		| sed 's/^/* /'
 
 	local_projects="$(get_local_projects)"
 	comm -23 \
