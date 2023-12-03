@@ -61,7 +61,7 @@ mkdir -p "${PR_STATE_PATH}"
 # Don't touch the cache file to preserve last modification date.
 touch "${PR_STATE_PATH:?}/"{current,history,ignored,last}
 
-PR_CACHE_TTL_DAYS="${PR_CACHE_TTL_DAYS:-1}"
+PR_CACHE_TTL_DAYS="${PR_CACHE_TTL_DAYS:-7}"
 
 LAST_PROJECT="$(<"${PR_STATE_PATH}/last")"
 
@@ -84,26 +84,23 @@ refresh_cache(){
 		[ "${cache_age_in_days}" -lt "${PR_CACHE_TTL_DAYS}" ] && return
 	fi
 
-	echo "Writing repo list to ${PR_STATE_PATH}/cache in the background" >&2
-	sleep 0.5
+	echo "Writing repo list to ${PR_STATE_PATH}/cache" >&2
 
-	(
-		# shellcheck disable=SC2016
-		gh api graphql \
-			--paginate \
-			-f query='
-				query($endCursor: String) {
-					viewer {
-						repositoriesContributedTo(first: 100, isLocked: false, includeUserRepositories: true, after: $endCursor) {
-							nodes { nameWithOwner }
-							pageInfo { hasNextPage endCursor }
-						}
+	# shellcheck disable=SC2016
+	gh api graphql \
+		--paginate \
+		-f query='
+			query($endCursor: String) {
+				viewer {
+					repositoriesContributedTo(first: 100, isLocked: false, includeUserRepositories: true, after: $endCursor) {
+						nodes { nameWithOwner }
+						pageInfo { hasNextPage endCursor }
 					}
 				}
-				' \
-			--jq '.[].viewer.repositoriesContributedTo.nodes[].nameWithOwner' \
-			> "${PR_STATE_PATH}/cache"
-	) &
+			}
+			' \
+		--jq '.[].viewer.repositoriesContributedTo.nodes[].nameWithOwner' \
+		> "${PR_STATE_PATH}/cache"
 }
 
 get_local_projects(){
@@ -114,7 +111,9 @@ get_local_projects(){
 }
 
 get_projects(){
-	echo "- ${LAST_PROJECT}"
+	if [ "${LAST_PROJECT}" != "" ]; then
+		echo "- ${LAST_PROJECT}"
+	fi
 
 	recent_projects="$(
 		sort < "${PR_STATE_PATH}/history" \
@@ -125,8 +124,9 @@ get_projects(){
 			| sed 's/ *[0-9]* //'
 	)"
 
-	# shellcheck disable=SC2001
-	echo "${recent_projects}" | sed 's/^/* /'
+	echo "${recent_projects}" \
+		| grep -v '^$' \
+		| sed 's/^/* /'
 
 	local_projects="$(get_local_projects)"
 	comm -23 \
