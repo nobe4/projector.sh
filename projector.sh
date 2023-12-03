@@ -14,7 +14,6 @@
 #/   - '?'  Remote project
 #/
 #/ Requirements:
-#/   - tmux
 #/   - fzf
 #/   - gh
 #/
@@ -209,13 +208,6 @@ clone_project(){
 	if [ ! -d "${project_path}" ]; then
 		gh repo clone "${1}" "${project_path}"
 	fi
-}
-
-update_last(){
-	current_session="$(tmux display-message -p '#S')"
-
-	[ "${current_session}" == "${LAST_PROJECT//[.:]/_}" ] && return
-	echo "${1}" > "${LAST_FILE_PATH}"
 }
 
 switch_session(){
