@@ -9,23 +9,22 @@ Go to `nobe4/projector.sh`, go to `nobe4/gh-edit`, go back, go to `cli/cli`, and
 ---
 
 If you work with many projects, you can understand the struggle to keep
-everything organized and tidy. If you like to have one tmux session per project,
-you know it can become a mess.
+everything organized and tidy. If you like to have one session per project, you
+know it can become a mess.
 
 `projector.sh` replaces all the commands you would usually run to switch/manage
 projects, such as:
 - `git clone $project`
-- `tmux new-session -t $project`
-- `tmux switch-session -t $project`
+- `switch to project` (cd, tmux, etc.)
 - `mv path/to/$project`
 - `rm path/to/$project`
 
 It assumes a strong relationship between:
 ```
-GitHub repo  <=> local folder <=> tmux session
+GitHub repo  <=> local folder <=> session
 ```
 
-E.g.:
+E.g. with [`tmux.sh`](./switchers/tmux.sh) configured:
 
 ```bash
 projector.sh
@@ -44,7 +43,6 @@ That's it :tada:
 
 ## Requirements
 
-- [`tmux`](https://github.com/tmux/tmux)
 - [`fzf`](https://github.com/junegunn/fzf)
 - [`gh`](https://github.com/cli/cli)
 
@@ -57,3 +55,15 @@ projector.sh
 ```
 
 See full help in [`./projector.sh`](./projector.sh) or with `projector.sh -h`.
+
+### Switchers
+
+To keep `projector.sh` as small as possible, the switching logic is decoupled
+and left to the reader for implementation. The default is to create a new shell
+in the project's directory.
+
+Use the `PR_SWITCHER` environment variable to reference which switcher you want
+to use.
+
+See [./switchers/](./switchers/) for examples.
+New switchers PRs are welcomed.
