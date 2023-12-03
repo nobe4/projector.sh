@@ -4,6 +4,7 @@
 
 https://github.com/nobe4/projector.sh/assets/2452791/c5606191-0539-41ee-aaad-d03e964ab943
 
+E.g. using [`pr`](https://github.com/nobe4/dotfiles/blob/main/bin/pr):
 Go to `nobe4/projector.sh`, go to `nobe4/gh-edit`, go back, go to `cli/cli`, and show the folder structure.
 
 ---
@@ -22,16 +23,6 @@ projects, such as:
 It assumes a strong relationship between:
 ```
 GitHub repo  <=> local folder <=> session
-```
-
-E.g. with [`tmux.sh`](./switchers/tmux.sh) configured:
-
-```bash
-projector.sh
-# select nobe4/projector.sh and press <CR>
-# => clones in ~/dev/nobe4/projector.sh
-# => creates a tmux session called nobe4/projector_sh
-# => switch to the session called nobe4/projector_sh
 ```
 
 ## Install

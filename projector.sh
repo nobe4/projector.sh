@@ -4,7 +4,7 @@
 #/
 #/ Select a local or remote project to switch to.
 #/
-#/ Local projects are folders in ${BASE_PATH}.
+#/ Local projects are folders in ${PR_BASE_PATH}.
 #/ Remote projects are repositories you contributed to.
 #/
 #/ Status indications in the FZF search:
@@ -22,7 +22,7 @@
 #/   -v|--version   Display the version.
 #/   -r|--refresh   Refresh cache.
 #/
-#/ Commands (default: '${DEFAULT_COMMAND}'):
+#/ Commands (default: 'switch'):
 #/   debug          Print some debug information.
 #/   delete         Delete the selected local project.
 #/   -|last         Switch to last project ('${LAST_PROJECT}')
@@ -34,98 +34,43 @@
 #/
 #/ Environment variables:
 #/   FZF_DEFAULT_OPTS       Respects this value for every FZF invocations.
+#/                          '{2}' corresponds to the selected project.
 #/                          Value: '${FZF_DEFAULT_OPTS}'
 #/
-#/   FZF_ADDITIONAL_OPTS    Append those to 'FZF_DEFAULT_OPTS'.
-#/                          Value: '${FZF_ADDITIONAL_OPTS}'
-#/
 #/   PR_BASE_PATH           Path to the base folder.
-#/                          Value: '${BASE_PATH}'
+#/                          Value: '${PR_BASE_PATH}'
 #/
 #/   PR_CACHE_TTL_DAYS      Number of days after which the cache needs to refresh.
 #/                          Set to -1 to always refresh.
-#/                          Value: '${CACHE_TTL_DAYS}'
+#/                          Value: '${PR_CACHE_TTL_DAYS}'
 #/
 #/   PR_STATE_PATH          Path to the state folder.
 #/                          Uses XDG_STATE_HOME if set.
-#/                          value: '${STATE_PATH}'
+#/                          value: '${PR_STATE_PATH}'
 #/
 #/   PR_SWITCHER            Path or name of a script to use as the project
 #/                          switcher. See switchers/tmux.sh for inspiration.
-#/
-#/   PR_FZF_PREVIEW_COMMAND FZF command for preview ({2} corresponds to the selected project)
-#/                          Set to ' ' to disable.
-#/                          Value: '${FZF_PREVIEW_COMMAND}'
 
 set -e
 
-BASE_PATH="${PR_BASE_PATH:-${HOME:?}/dev}"
-CACHE_TTL_DAYS="${PR_CACHE_TTL_DAYS:-1}"
+PR_BASE_PATH="${PR_BASE_PATH:-${HOME:?}/dev}"
 
-STATE_PATH="${PR_STATE_PATH:-${XDG_STATE_HOME:-${HOME:?}/.local/state}/pr}"
-mkdir -p "${STATE_PATH}"
+PR_STATE_PATH="${PR_STATE_PATH:-${XDG_STATE_HOME:-${HOME:?}/.local/state}/pr}"
+mkdir -p "${PR_STATE_PATH}"
 
-CACHE_FILE_PATH="${STATE_PATH:?}/cache"
-FORCE_RELOAD_CACHE=0
 # Don't touch the cache file to preserve last modification date.
+touch "${PR_STATE_PATH:?}/"{current,history,ignored,last}
 
-CURRENT_FILE_PATH="${STATE_PATH:?}/current"
-touch "${CURRENT_FILE_PATH}"
+PR_CACHE_TTL_DAYS="${PR_CACHE_TTL_DAYS:-1}"
 
-LAST_FILE_PATH="${STATE_PATH:?}/last"
-touch "${LAST_FILE_PATH}"
-# shellcheck disable=SC2155
-LAST_PROJECT="$(<"${LAST_FILE_PATH}")"
-
-HISTORY_FILE_PATH="${STATE_PATH:?}/history"
-touch "${HISTORY_FILE_PATH}"
-
-IGNORED_FILE_PATH="${STATE_PATH:?}/ignored"
-touch "${IGNORED_FILE_PATH}"
-
-# shellcheck disable=SC2016
-DEFAULT_FZF_PREVIEW_COMMAND='GH_FORCE_TTY=$FZF_PREVIEW_COLUMNS gh repo view {2}'
-FZF_PREVIEW_COMMAND="${PR_FZF_PREVIEW_COMMAND:-${DEFAULT_FZF_PREVIEW_COMMAND}}"
-
-DEFAULT_FZF_OPTS='
-  --no-sort
-  --info=inline
-  --preview-window=up:85%:border-bottom:wrap
-  --no-mouse
-  --bind="ctrl-o:execute-silent(gh repo view --web {2})"
-  --bind="ctrl-i:execute-silent(echo {2} >> '"${IGNORED_FILE_PATH}"')"
-'
-FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS:-${DEFAULT_FZF_OPTS}} ${FZF_ADDITIONAL_OPTS}"
-
-# shellcheck disable=SC2016
-REPO_QUERY='
-  query($endCursor: String) {
-    viewer {
-      repositoriesContributedTo(
-        first: 100
-        isLocked: false
-        includeUserRepositories: true
-        after: $endCursor
-      ) {
-        nodes { nameWithOwner }
-        pageInfo { hasNextPage endCursor }
-      }
-    }
-  }
-'
-REPO_EXTRACT='.[].viewer.repositoriesContributedTo.nodes[].nameWithOwner'
-
-DEFAULT_COMMAND='switch'
+LAST_PROJECT="$(<"${PR_STATE_PATH}/last")"
 
 show_help() {
 	export \
-		BASE_PATH \
-		CACHE_TTL_DAYS \
-		DEFAULT_COMMAND \
-		FZF_DEFAULT_OPTS \
-		FZF_PREVIEW_COMMAND \
 		LAST_PROJECT \
-		STATE_PATH
+		PR_BASE_PATH \
+		PR_CACHE_TTL_DAYS \
+		PR_STATE_PATH
 	grep ^#/ <"${0}" | cut -c4- | envsubst
 }
 
@@ -134,26 +79,43 @@ show_version(){
 }
 
 refresh_cache(){
-	if [ "${FORCE_RELOAD_CACHE}" == 0 ] && [ -f "${CACHE_FILE_PATH}" ]; then
-		cache_age_in_days="$((( $(date +%s) - $(date -r "${CACHE_FILE_PATH}" +%s)) / 86400))"
-		[ "${cache_age_in_days}" -lt "${CACHE_TTL_DAYS}" ] && return
+	if [ -f "${PR_STATE_PATH}/cache" ]; then
+		cache_age_in_days="$((( $(date +%s) - $(date -r "${PR_STATE_PATH}/cache" +%s)) / 86400))"
+		[ "${cache_age_in_days}" -lt "${PR_CACHE_TTL_DAYS}" ] && return
 	fi
 
-	echo "Writing repo list to ${CACHE_FILE_PATH} in the background" >&2
+	echo "Writing repo list to ${PR_STATE_PATH}/cache in the background" >&2
 	sleep 0.5
 
 	(
+		# shellcheck disable=SC2016
+		query='
+		  query($endCursor: String) {
+			viewer {
+			  repositoriesContributedTo(
+				first: 100
+				isLocked: false
+				includeUserRepositories: true
+				after: $endCursor
+			  ) {
+				nodes { nameWithOwner }
+				pageInfo { hasNextPage endCursor }
+			  }
+			}
+		  }
+		'
+		extract='.[].viewer.repositoriesContributedTo.nodes[].nameWithOwner'
 		gh api graphql \
 			--paginate \
-			-f query="${REPO_QUERY}" \
-			--jq "${REPO_EXTRACT}" \
-			> "${CACHE_FILE_PATH}"
+			-f query="${query}" \
+			--jq "${extract}" \
+			> "${PR_STATE_PATH}/cache"
 	) &
 }
 
 get_local_projects(){
-	find "${BASE_PATH}" -type d -maxdepth 2 -mindepth 2 \
-		| sed "s#^${BASE_PATH}/##" \
+	find "${PR_BASE_PATH}" -type d -maxdepth 2 -mindepth 2 \
+		| sed "s#^${PR_BASE_PATH}/##" \
 		| grep -v '^$' \
 		| sort -u
 }
@@ -162,7 +124,7 @@ get_projects(){
 	echo "- ${LAST_PROJECT}"
 
 	recent_projects="$(
-		sort < "${HISTORY_FILE_PATH}" \
+		sort < "${PR_STATE_PATH}/history" \
 			| grep -v '^$' \
 			| grep -v "${LAST_PROJECT}" \
 			| uniq -c \
@@ -181,10 +143,10 @@ get_projects(){
 		| sed 's/^/+ /'
 
 	refresh_cache
-	remote_projects="$(cat "${CACHE_FILE_PATH}")"
+	remote_projects="$(cat "${PR_STATE_PATH}/cache")"
 	all_projects="$(echo -e "${remote_projects}" | sort -u)"
 
-	ignored_projects="$(cat "${IGNORED_FILE_PATH}")"
+	ignored_projects="$(cat "${PR_STATE_PATH}/ignored")"
 	projects_to_reject="$(echo -e "${ignored_projects}\n${recent_projects}\n${local_projects}" | sort -u)"
 
 	comm -23 \
@@ -201,13 +163,12 @@ select_project(){
 			--nth=2 \
 			--query="${2}" \
 			--prompt="${3}" \
-			--preview="${FZF_PREVIEW_COMMAND}" \
 			| awk '{print $2}' \
 		|| true # prevent fzf from failing on exit
 }
 
 clone_project(){
-	project_path="${BASE_PATH}/${1}"
+	project_path="${PR_BASE_PATH}/${1}"
 	if [ ! -d "${project_path}" ]; then
 		gh repo clone "${1}" "${project_path}"
 	fi
@@ -215,12 +176,11 @@ clone_project(){
 
 switch_session(){
 	if [ "${PR_SWITCHER}" == "" ]; then
-		cd "${BASE_PATH}/${1}"
+		cd "${PR_BASE_PATH}/${1}"
 		# This obviously isn't ideal, as it creates a new persistent shell.
 		"${SHELL}"
 	else
-		export PR_BASE_PATH="${BASE_PATH}"
-		export PR_STATE_PATH="${STATE_PATH}"
+		export PR_BASE_PATH PR_STATE_PATH
 		"${PR_SWITCHER}" "${1}"
 	fi
 }
@@ -229,7 +189,7 @@ while [ "${#}" -gt 0 ]; do
 	case "${1}" in
 		-h|--help) show_help && exit 0 ;;
 		-v|--version) show_version && exit 0 ;;
-		-r|--reload) FORCE_RELOAD_CACHE=1 ;;
+		-r|--reload) PR_CACHE_TTL_DAYS=-1 ;;
 		-) break ;;
 		-*)
 			echo "Unknown flag '${1}'"
@@ -242,7 +202,7 @@ while [ "${#}" -gt 0 ]; do
 	shift 1
 done
 
-COMMAND="${1:-"${DEFAULT_COMMAND}"}"
+COMMAND="${1:-"switch"}"
 query="${*:2}"
 
 case "${COMMAND}" in
@@ -254,12 +214,12 @@ case "${COMMAND}" in
 
 	delete)
 		project="$(select_project "$(get_local_projects)" "${query}" "Delete ")"
-		rm -rf "${BASE_PATH:?}/${project:?}"
+		rm -rf "${PR_BASE_PATH:?}/${project:?}"
 		echo "${project} deleted locally"
 		;;
 
 	debug)
-		find "${STATE_PATH}" -type f \
+		find "${PR_STATE_PATH}" -type f \
 			-exec bash -c 'echo -e "$1\n$(cat "$1" | sort | uniq -c | sort -nr)\n"' \
 			shell {} \; \
 			| less
