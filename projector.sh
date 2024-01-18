@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#VERSION 0.0.3
+#VERSION 0.0.4
 #/ Usage: projector.sh [FLAGS] [COMMAND] [QUERY]
 #/
 #/ Select a local or remote project to switch to.
@@ -25,7 +25,8 @@
 #/ Commands (default: 'switch'):
 #/   debug          Print some debug information.
 #/   delete         Delete the selected local project.
-#/   -|last         Switch to last project ('${LAST_PROJECT}')
+#/   history        Display projects in order of last access.
+#/   -|last         Switch to last project ('${LAST_PROJECT}').
 #/   n|new          Clone a project not in the contribution list.
 #/                  Needs the 'owner/repo' or URL in QUERY.
 #/   o|output       Output the name of the selected project.
@@ -217,6 +218,8 @@ case "${COMMAND}" in
 			shell {} \; \
 			| less
 		;;
+
+	history) tac "${PR_STATE_PATH}/history" | awk '!l[$0]++' ;;
 
 	-|last) switch_session "${LAST_PROJECT}" ;;
 
