@@ -23,6 +23,7 @@ echo "${1}" > "${current_file}"
 new_session="${1//[.:]/_}"
 
 if ! tmux has-session -t="${new_session}" 2> /dev/null; then
+	unset FZF_DEFAULT_OPTS PR_SWITCHER
 	tmux new-session -d -s "${new_session}" -c "${PR_BASE_PATH}/${1}"
 fi
 
