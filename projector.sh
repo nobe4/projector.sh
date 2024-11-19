@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#VERSION 0.0.5
+#VERSION 0.0.6
 #/ Usage: projector.sh [FLAGS] [COMMAND] [QUERY]
 #/
 #/ Select a local or remote project to switch to.
@@ -107,7 +107,7 @@ refresh_cache(){
 }
 
 get_local_projects(){
-	find "${PR_BASE_PATH}" -type d -maxdepth 2 -mindepth 2 \
+	find -type d -maxdepth 2 -mindepth 2 "${PR_BASE_PATH}" \
 		| sed "s#^${PR_BASE_PATH}/##" \
 		| grep -v '^$' \
 		| sort -u
@@ -216,7 +216,7 @@ case "${COMMAND}" in
 		;;
 
 	debug)
-		find "${PR_STATE_PATH}" -type f \
+		find -type f "${PR_STATE_PATH}" \
 			-exec bash -c 'echo -e "$1\n$(cat "$1" | sort | uniq -c | sort -nr)\n"' \
 			shell {} \; \
 			| less
