@@ -107,7 +107,7 @@ refresh_cache(){
 }
 
 get_local_projects(){
-	find -type d -maxdepth 2 -mindepth 2 "${PR_BASE_PATH}" \
+	find "${PR_BASE_PATH}" -maxdepth 2 -mindepth 2 -type d  \
 		| sed "s#^${PR_BASE_PATH}/##" \
 		| grep -v '^$' \
 		| sort -u
@@ -216,7 +216,7 @@ case "${COMMAND}" in
 		;;
 
 	debug)
-		find -type f "${PR_STATE_PATH}" \
+		find "${PR_STATE_PATH}" -type f \
 			-exec bash -c 'echo -e "$1\n$(cat "$1" | sort | uniq -c | sort -nr)\n"' \
 			shell {} \; \
 			| less
