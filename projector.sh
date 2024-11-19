@@ -21,6 +21,7 @@
 #/   -h|--help      Display this help.
 #/   -v|--version   Display the version.
 #/   -r|--refresh   Refresh cache.
+#/   --verbose      Set -x
 #/
 #/ Commands (default: 'switch'):
 #/   debug          Print some debug information.
@@ -185,6 +186,7 @@ while [ "${#}" -gt 0 ]; do
 		-h|--help) show_help && exit 0 ;;
 		-v|--version) show_version && exit 0 ;;
 		-r|--reload) PR_CACHE_TTL_DAYS=-1 ;;
+		--verbose) set -x ;;
 		-) break ;;
 		-*)
 			echo "Unknown flag '${1}'"
