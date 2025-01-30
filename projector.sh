@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#VERSION 0.0.6
+#VERSION 0.0.7
 #/ Usage: projector.sh [FLAGS] [COMMAND] [QUERY]
 #/
 #/ Select a local or remote project to switch to.
@@ -87,7 +87,8 @@ refresh_cache(){
 		[ "${cache_age_in_days}" -lt "${PR_CACHE_TTL_DAYS}" ] && return
 	fi
 
-	echo "Writing repo list to ${PR_STATE_PATH}/cache" >&2
+	echo "Writing repo list to ${PR_STATE_PATH}/cache in the background." >&2
+	sleep 1
 
 	# shellcheck disable=SC2016
 	gh api graphql \
@@ -103,7 +104,8 @@ refresh_cache(){
 			}
 			' \
 		--jq '.[].viewer.repositoriesContributedTo.nodes[].nameWithOwner' \
-		> "${PR_STATE_PATH}/cache"
+		> "${PR_STATE_PATH}/cache" \
+		&
 }
 
 get_local_projects(){
